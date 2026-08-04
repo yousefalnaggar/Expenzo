@@ -1,0 +1,6 @@
+.env.local
+.env
+node_modules/
+.next/
+CLAUDE.md 
+expense-tracker-spec.md
