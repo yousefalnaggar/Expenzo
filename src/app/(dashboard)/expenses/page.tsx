@@ -6,6 +6,7 @@ import { ExpenseFilters } from "@/components/expenses/expense-filters";
 import { ExpensePagination } from "@/components/expenses/expense-pagination";
 import { createExpense } from "@/lib/actions/expense-actions";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 type SearchParams = {
   search?: string;
@@ -44,13 +45,18 @@ export default async function ExpensesPage({
     <div className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-medium">Expenses</h1>
-        <ExpenseDialog
-          trigger={<Button>Add expense</Button>}
-          title="Add expense"
-          submitLabel="Add expense"
-          action={createExpense}
-          categories={categories}
-        />
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" render={<Link href="/settings" />}>
+            Manage categories
+          </Button>
+          <ExpenseDialog
+            trigger={<Button>Add expense</Button>}
+            title="Add expense"
+            submitLabel="Add expense"
+            action={createExpense}
+            categories={categories}
+          />
+        </div>
       </div>
       <ExpenseFilters categories={categories} />
       {expenses.length === 0 && total === 0 ? (
