@@ -36,7 +36,11 @@ export function ExpensePagination({
             Previous
           </Button>
         ) : (
-          <Button variant="outline" render={<Link href={hrefForPage(page - 1)} />}>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href={hrefForPage(page - 1)} />}
+          >
             Previous
           </Button>
         )}
@@ -45,7 +49,11 @@ export function ExpensePagination({
             Next
           </Button>
         ) : (
-          <Button variant="outline" render={<Link href={hrefForPage(page + 1)} />}>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href={hrefForPage(page + 1)} />}
+          >
             Next
           </Button>
         )}

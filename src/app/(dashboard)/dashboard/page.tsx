@@ -23,10 +23,20 @@ export default async function DashboardPage() {
         Dashboard charts and summaries land in a later phase.
       </p>
       <div className="flex gap-2">
-        <Button variant="outline" className="w-fit" render={<Link href="/expenses" />}>
+        <Button
+          variant="outline"
+          className="w-fit"
+          nativeButton={false}
+          render={<Link href="/expenses" />}
+        >
           View expenses
         </Button>
-        <Button variant="outline" className="w-fit" render={<Link href="/settings" />}>
+        <Button
+          variant="outline"
+          className="w-fit"
+          nativeButton={false}
+          render={<Link href="/settings" />}
+        >
           Manage categories
         </Button>
       </div>

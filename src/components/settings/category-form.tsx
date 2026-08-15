@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { startTransition, useActionState, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { categorySchema, type CategoryInput } from "@/lib/validations/category";
@@ -42,7 +42,7 @@ export function CategoryForm({
     const formData = new FormData();
     formData.set("name", data.name);
     formData.set("color", data.color);
-    formAction(formData);
+    startTransition(() => formAction(formData));
   });
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { startTransition, useActionState, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -62,7 +62,7 @@ export function ExpenseForm({
     formData.set("date", format(data.date, "yyyy-MM-dd"));
     formData.set("categoryId", data.categoryId ?? "");
     formData.set("note", data.note ?? "");
-    formAction(formData);
+    startTransition(() => formAction(formData));
   });
 
   return (

@@ -46,7 +46,7 @@ export default async function ExpensesPage({
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-medium">Expenses</h1>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" render={<Link href="/settings" />}>
+          <Button variant="ghost" nativeButton={false} render={<Link href="/settings" />}>
             Manage categories
           </Button>
           <ExpenseDialog

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -27,14 +27,14 @@ export function LoginForm() {
     const formData = new FormData();
     formData.set("email", data.email);
     formData.set("password", data.password);
-    formAction(formData);
+    startTransition(() => formAction(formData));
   });
 
   const onTryDemo = () => {
     const formData = new FormData();
     formData.set("email", "demo@expenzo.app");
     formData.set("password", "Demo1234!");
-    formAction(formData);
+    startTransition(() => formAction(formData));
   };
 
   return (

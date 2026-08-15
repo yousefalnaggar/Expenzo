@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -29,7 +29,7 @@ export function RegisterForm() {
     formData.set("email", data.email);
     formData.set("password", data.password);
     formData.set("confirmPassword", data.confirmPassword);
-    formAction(formData);
+    startTransition(() => formAction(formData));
   });
 
   return (
