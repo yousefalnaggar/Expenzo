@@ -30,6 +30,13 @@ export function LoginForm() {
     formAction(formData);
   });
 
+  const onTryDemo = () => {
+    const formData = new FormData();
+    formData.set("email", "demo@expenzo.app");
+    formData.set("password", "Demo1234!");
+    formAction(formData);
+  };
+
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
       <div className="grid gap-1.5">
@@ -54,6 +61,15 @@ export function LoginForm() {
       {state && !state.ok && <p className="text-destructive text-sm">{state.error}</p>}
       <Button type="submit" disabled={isPending} className="w-full">
         {isPending ? "Signing in…" : "Sign in"}
+      </Button>
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={isPending}
+        onClick={onTryDemo}
+        className="w-full"
+      >
+        Try the demo
       </Button>
     </form>
   );

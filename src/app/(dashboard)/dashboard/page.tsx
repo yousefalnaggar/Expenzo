@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth } from "@/auth";
 import { signOutUser } from "@/lib/actions/auth-actions";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,9 @@ export default async function DashboardPage() {
       <p className="text-muted-foreground text-sm">
         Dashboard charts and summaries land in a later phase.
       </p>
+      <Button variant="outline" className="w-fit" render={<Link href="/expenses" />}>
+        View expenses
+      </Button>
     </div>
   );
 }
