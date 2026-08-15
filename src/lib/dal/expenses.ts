@@ -13,11 +13,15 @@ export async function getExpenses(
     search?: string;
     page?: number;
     pageSize?: number;
+    sortBy?: "date" | "amount";
+    sortOrder?: "asc" | "desc";
   } = {},
 ) {
   const userId = await requireUserId();
   const page = filters.page ?? 1;
   const pageSize = filters.pageSize ?? 20;
+  const sortBy = filters.sortBy ?? "date";
+  const sortOrder = filters.sortOrder ?? "desc";
 
   const where = {
     userId,
@@ -28,11 +32,13 @@ export async function getExpenses(
       : {}),
   };
 
+  const orderBy = sortBy === "amount" ? { amountCents: sortOrder } : { date: sortOrder };
+
   const [items, total] = await Promise.all([
     prisma.expense.findMany({
       where,
       include: { category: true },
-      orderBy: { date: "desc" },
+      orderBy,
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),

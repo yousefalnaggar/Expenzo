@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { flexRender, useTable } from "@tanstack/react-table";
 import {
   createColumnHelper,
@@ -95,16 +97,71 @@ function RowActions({ expense, categories }: { expense: ExpenseRow; categories: 
   );
 }
 
+function SortableHeader({
+  label,
+  columnId,
+  sortBy,
+  sortOrder,
+  searchParams,
+}: {
+  label: string;
+  columnId: "date" | "amount";
+  sortBy: "date" | "amount";
+  sortOrder: "asc" | "desc";
+  searchParams: Record<string, string | undefined>;
+}) {
+  const isActive = sortBy === columnId;
+  const nextOrder = isActive && sortOrder === "asc" ? "desc" : "asc";
+
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value && key !== "sortBy" && key !== "sortOrder" && key !== "page") {
+      params.set(key, value);
+    }
+  }
+  params.set("sortBy", columnId);
+  params.set("sortOrder", nextOrder);
+
+  return (
+    <Link
+      href={`/expenses?${params.toString()}`}
+      className="hover:text-foreground inline-flex items-center gap-1"
+    >
+      {label}
+      {isActive &&
+        (sortOrder === "asc" ? (
+          <ArrowUp className="size-3.5" />
+        ) : (
+          <ArrowDown className="size-3.5" />
+        ))}
+    </Link>
+  );
+}
+
 export function ExpenseTable({
   expenses,
   categories,
+  sortBy,
+  sortOrder,
+  searchParams,
 }: {
   expenses: ExpenseRow[];
   categories: Category[];
+  sortBy: "date" | "amount";
+  sortOrder: "asc" | "desc";
+  searchParams: Record<string, string | undefined>;
 }) {
   const columns = columnHelper.columns([
     columnHelper.accessor("date", {
-      header: "Date",
+      header: () => (
+        <SortableHeader
+          label="Date"
+          columnId="date"
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          searchParams={searchParams}
+        />
+      ),
       cell: (info) => format(info.getValue(), "MMM d, yyyy"),
     }),
     columnHelper.accessor("description", {
@@ -127,7 +184,15 @@ export function ExpenseTable({
       },
     }),
     columnHelper.accessor("amountCents", {
-      header: "Amount",
+      header: () => (
+        <SortableHeader
+          label="Amount"
+          columnId="amount"
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          searchParams={searchParams}
+        />
+      ),
       cell: (info) => formatCurrency(info.getValue()),
       meta: { align: "right" as const },
     }),
