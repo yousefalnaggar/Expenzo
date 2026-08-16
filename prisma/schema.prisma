@@ -39,10 +39,11 @@ model Category {
 }
 
 model Expense {
-  id          String    @id @default(cuid())
-  amountCents Int // store cents, in `currency` — the amount as originally entered
-  currency    String    @default("USD") // "USD" | "EGP" | "EUR", validated at the app layer
-  description String
+  id                 String @id @default(cuid())
+  amountCents        Int // store cents, in `currency` — the amount as originally entered
+  currency           String @default("USD") // "USD" | "EGP" | "EUR", validated at the app layer
+  normalizedUsdCents Int // USD-equivalent at entry time, frozen — for currency-agnostic sorting only, never displayed
+  description        String
   date        DateTime // the spend date (not createdAt)
   note        String?
   userId      String

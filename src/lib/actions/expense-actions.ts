@@ -4,12 +4,21 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { expenseSchema } from "@/lib/validations/expense";
 import * as dal from "@/lib/dal/expenses";
+import { getExchangeRate } from "@/lib/exchange-rates";
 
 export type ActionResult =
   { ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string[] | undefined> };
 
 function toExpenseInput(formData: FormData) {
   return expenseSchema.safeParse(Object.fromEntries(formData));
+}
+
+// Frozen USD-equivalent at entry time, used only for currency-agnostic
+// sorting (see getExpenses) — never shown to the user, never re-derived.
+async function computeNormalizedUsdCents(amountCents: number, currency: "USD" | "EGP" | "EUR") {
+  if (currency === "USD") return amountCents;
+  const rate = await getExchangeRate(currency);
+  return Math.round(amountCents / rate);
 }
 
 export async function createExpense(
@@ -25,11 +34,13 @@ export async function createExpense(
     };
   }
   const { amount, categoryId, ...rest } = parsed.data;
+  const amountCents = Math.round(amount * 100);
 
   try {
     await dal.createExpense({
       ...rest,
-      amountCents: Math.round(amount * 100),
+      amountCents,
+      normalizedUsdCents: await computeNormalizedUsdCents(amountCents, rest.currency),
       categoryId: categoryId || undefined,
     });
   } catch {
@@ -55,11 +66,13 @@ export async function updateExpense(
     };
   }
   const { amount, categoryId, ...rest } = parsed.data;
+  const amountCents = Math.round(amount * 100);
 
   try {
     await dal.updateExpense(id, {
       ...rest,
-      amountCents: Math.round(amount * 100),
+      amountCents,
+      normalizedUsdCents: await computeNormalizedUsdCents(amountCents, rest.currency),
       categoryId: categoryId || null,
     });
   } catch {

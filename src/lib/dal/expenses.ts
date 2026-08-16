@@ -35,12 +35,11 @@ export async function getExpenses(
       : {}),
   };
 
-  // Sorting "by amount" compares each row's native amountCents directly. Each
-  // expense keeps the currency it was entered in (see createExpense), so if a
-  // user has expenses in more than one currency, this ordering isn't
-  // currency-normalized — a known, minor limitation rather than silently
-  // wrong data (values themselves are always exact in their own currency).
-  const orderBy = sortBy === "amount" ? { amountCents: sortOrder } : { date: sortOrder };
+  // Sorting "by amount" uses normalizedUsdCents (a frozen USD-equivalent
+  // captured at entry time — see createExpense), not the native amountCents,
+  // so ordering stays correct across mixed currencies without needing a
+  // live rate fetch or in-memory sort (which would break pagination).
+  const orderBy = sortBy === "amount" ? { normalizedUsdCents: sortOrder } : { date: sortOrder };
 
   const [items, total] = await Promise.all([
     prisma.expense.findMany({
@@ -66,6 +65,7 @@ export async function getExpenseById(id: string) {
 export async function createExpense(input: {
   amountCents: number;
   currency: Currency;
+  normalizedUsdCents: number;
   description: string;
   date: Date;
   note?: string;
@@ -82,6 +82,7 @@ export async function updateExpense(
   input: {
     amountCents: number;
     currency: Currency;
+    normalizedUsdCents: number;
     description: string;
     date: Date;
     note?: string;

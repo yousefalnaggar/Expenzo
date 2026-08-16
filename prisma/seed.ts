@@ -81,6 +81,7 @@ async function main() {
 
     return {
       amountCents,
+      normalizedUsdCents: amountCents, // seed data is always USD
       description,
       date: randomDateWithinLastMonths(6),
       userId: user.id,
