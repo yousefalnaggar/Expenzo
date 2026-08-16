@@ -15,6 +15,7 @@ model User {
   emailVerified DateTime? // set by Auth.js's PrismaAdapter on OAuth sign-in
   passwordHash  String? // null for OAuth-only users
   image         String?
+  preferredCurrency String @default("USD") // "USD" | "EGP" | "EUR", validated at the app layer
   accounts     Account[]
   sessions     Session[]
   categories   Category[]

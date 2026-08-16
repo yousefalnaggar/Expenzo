@@ -24,6 +24,8 @@ export function ExpenseDialog({
   categories,
   defaultValues,
   submitLabel,
+  currency,
+  rate,
 }: {
   // Uncontrolled mode: pass `trigger`, the dialog owns its own open state.
   // Controlled mode (e.g. opened from a dropdown menu item, which must not
@@ -36,6 +38,8 @@ export function ExpenseDialog({
   categories: Category[];
   defaultValues?: Partial<ExpenseInput> & { amount?: number };
   submitLabel: string;
+  currency: string;
+  rate: number;
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = openProp ?? uncontrolledOpen;
@@ -54,6 +58,8 @@ export function ExpenseDialog({
             categories={categories}
             defaultValues={defaultValues}
             submitLabel={submitLabel}
+            currency={currency}
+            rate={rate}
             onSuccess={() => setOpen(false)}
           />
         )}

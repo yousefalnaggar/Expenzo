@@ -28,12 +28,19 @@ export function ExpenseForm({
   categories,
   defaultValues,
   submitLabel,
+  currency,
+  rate,
   onSuccess,
 }: {
   action: ExpenseAction;
   categories: Category[];
   defaultValues?: Partial<ExpenseInput> & { amount?: number };
   submitLabel: string;
+  // `amount` in defaultValues and the form field is always in `currency` (the
+  // user's display currency), converted to/from USD cents via `rate` at the
+  // form boundary — the schema/action underneath still deals in USD dollars.
+  currency: string;
+  rate: number;
   onSuccess: () => void;
 }) {
   const [state, formAction, isPending] = useActionState(action, undefined);
@@ -58,7 +65,7 @@ export function ExpenseForm({
   const onSubmit = form.handleSubmit((data) => {
     const formData = new FormData();
     formData.set("description", data.description);
-    formData.set("amount", String(data.amount));
+    formData.set("amount", String(data.amount / rate));
     formData.set("date", format(data.date, "yyyy-MM-dd"));
     formData.set("categoryId", data.categoryId ?? "");
     formData.set("note", data.note ?? "");
@@ -76,7 +83,7 @@ export function ExpenseForm({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="grid gap-1.5">
-          <Label htmlFor="amount">Amount</Label>
+          <Label htmlFor="amount">Amount ({currency})</Label>
           <Input
             id="amount"
             type="number"

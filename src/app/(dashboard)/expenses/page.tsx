@@ -1,12 +1,13 @@
 import { getExpenses } from "@/lib/dal/expenses";
 import { getCategories } from "@/lib/dal/categories";
+import { getUserPreferredCurrency } from "@/lib/dal/users";
+import { getExchangeRate, type Currency } from "@/lib/exchange-rates";
 import { ExpenseTable } from "@/components/expenses/expense-table";
 import { ExpenseDialog } from "@/components/expenses/expense-dialog";
 import { ExpenseFilters } from "@/components/expenses/expense-filters";
 import { ExpensePagination } from "@/components/expenses/expense-pagination";
 import { createExpense } from "@/lib/actions/expense-actions";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 type SearchParams = {
   search?: string;
@@ -28,7 +29,8 @@ export default async function ExpensesPage({
   const sortBy = params.sortBy === "amount" ? "amount" : "date";
   const sortOrder = params.sortOrder === "asc" ? "asc" : "desc";
 
-  const [{ items: expenses, total, pageSize }, categories] = await Promise.all([
+  const currency = await getUserPreferredCurrency();
+  const [{ items: expenses, total, pageSize }, categories, rate] = await Promise.all([
     getExpenses({
       search: params.search,
       categoryId: params.categoryId,
@@ -39,24 +41,22 @@ export default async function ExpensesPage({
       sortOrder,
     }),
     getCategories(),
+    getExchangeRate(currency as Currency),
   ]);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-medium">Expenses</h1>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" nativeButton={false} render={<Link href="/settings" />}>
-            Manage categories
-          </Button>
-          <ExpenseDialog
-            trigger={<Button>Add expense</Button>}
-            title="Add expense"
-            submitLabel="Add expense"
-            action={createExpense}
-            categories={categories}
-          />
-        </div>
+        <ExpenseDialog
+          trigger={<Button>Add expense</Button>}
+          title="Add expense"
+          submitLabel="Add expense"
+          action={createExpense}
+          categories={categories}
+          currency={currency}
+          rate={rate}
+        />
       </div>
       <ExpenseFilters categories={categories} />
       {expenses.length === 0 && total === 0 ? (
@@ -73,6 +73,8 @@ export default async function ExpensesPage({
             sortBy={sortBy}
             sortOrder={sortOrder}
             searchParams={params}
+            currency={currency}
+            rate={rate}
           />
           <ExpensePagination page={page} pageSize={pageSize} total={total} searchParams={params} />
         </>

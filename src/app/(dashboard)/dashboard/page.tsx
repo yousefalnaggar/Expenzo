@@ -1,45 +1,65 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { signOutUser } from "@/lib/actions/auth-actions";
+import {
+  getDashboardSummary,
+  getExpenses,
+  getMonthlyTrend,
+  getSpendByCategory,
+  hasAnyExpenses,
+} from "@/lib/dal/expenses";
+import { getUserPreferredCurrency } from "@/lib/dal/users";
+import { getExchangeRate, type Currency } from "@/lib/exchange-rates";
 import { Button } from "@/components/ui/button";
+import { SummaryCards } from "@/components/dashboard/summary-cards";
+import { SpendByCategoryChart } from "@/components/dashboard/spend-by-category-chart";
+import { MonthlyTrendChart } from "@/components/dashboard/monthly-trend-chart";
+import { RecentExpenses } from "@/components/dashboard/recent-expenses";
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const [session, hasExpenses] = await Promise.all([auth(), hasAnyExpenses()]);
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-medium">Welcome, {session?.user?.name ?? "there"}</h1>
-          <p className="text-muted-foreground text-sm">{session?.user?.email}</p>
-        </div>
-        <form action={signOutUser}>
-          <Button type="submit" variant="outline">
-            Sign out
+    <div className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
+      <div>
+        <h1 className="text-lg font-medium">Welcome, {session?.user?.name ?? "there"}</h1>
+        <p className="text-muted-foreground text-sm">{session?.user?.email}</p>
+      </div>
+
+      {hasExpenses ? (
+        <DashboardContent />
+      ) : (
+        <div className="flex flex-col items-center gap-3 rounded-lg border py-16 text-center">
+          <p className="text-muted-foreground text-sm">
+            No expenses yet. Add your first one to see your spending here.
+          </p>
+          <Button nativeButton={false} render={<Link href="/expenses" />}>
+            Add an expense
           </Button>
-        </form>
-      </div>
-      <p className="text-muted-foreground text-sm">
-        Dashboard charts and summaries land in a later phase.
-      </p>
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          className="w-fit"
-          nativeButton={false}
-          render={<Link href="/expenses" />}
-        >
-          View expenses
-        </Button>
-        <Button
-          variant="outline"
-          className="w-fit"
-          nativeButton={false}
-          render={<Link href="/settings" />}
-        >
-          Manage categories
-        </Button>
-      </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+async function DashboardContent() {
+  const currency = await getUserPreferredCurrency();
+  const [summary, spendByCategory, monthlyTrend, { items: recentExpenses }, rate] =
+    await Promise.all([
+      getDashboardSummary(),
+      getSpendByCategory(),
+      getMonthlyTrend(),
+      getExpenses({ pageSize: 5 }),
+      getExchangeRate(currency as Currency),
+    ]);
+
+  return (
+    <>
+      <SummaryCards {...summary} currency={currency} rate={rate} />
+      <div className="grid gap-4 md:grid-cols-2">
+        <SpendByCategoryChart data={spendByCategory} currency={currency} rate={rate} />
+        <MonthlyTrendChart data={monthlyTrend} currency={currency} rate={rate} />
+      </div>
+      <RecentExpenses expenses={recentExpenses} currency={currency} rate={rate} />
+    </>
   );
 }

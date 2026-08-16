@@ -48,7 +48,17 @@ type Category = { id: string; name: string; color: string };
 
 const columnHelper = createColumnHelper<typeof features, ExpenseRow>();
 
-function RowActions({ expense, categories }: { expense: ExpenseRow; categories: Category[] }) {
+function RowActions({
+  expense,
+  categories,
+  currency,
+  rate,
+}: {
+  expense: ExpenseRow;
+  categories: Category[];
+  currency: string;
+  rate: number;
+}) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -78,9 +88,11 @@ function RowActions({ expense, categories }: { expense: ExpenseRow; categories: 
         submitLabel="Save changes"
         action={updateExpense.bind(null, expense.id)}
         categories={categories}
+        currency={currency}
+        rate={rate}
         defaultValues={{
           description: expense.description,
-          amount: expense.amountCents / 100,
+          amount: (expense.amountCents * rate) / 100,
           date: expense.date,
           categoryId: expense.categoryId ?? "",
           note: expense.note ?? "",
@@ -144,12 +156,16 @@ export function ExpenseTable({
   sortBy,
   sortOrder,
   searchParams,
+  currency,
+  rate,
 }: {
   expenses: ExpenseRow[];
   categories: Category[];
   sortBy: "date" | "amount";
   sortOrder: "asc" | "desc";
   searchParams: Record<string, string | undefined>;
+  currency: string;
+  rate: number;
 }) {
   const columns = columnHelper.columns([
     columnHelper.accessor("date", {
@@ -193,12 +209,19 @@ export function ExpenseTable({
           searchParams={searchParams}
         />
       ),
-      cell: (info) => formatCurrency(info.getValue()),
+      cell: (info) => formatCurrency(info.getValue(), currency, rate),
       meta: { align: "right" as const },
     }),
     columnHelper.display({
       id: "actions",
-      cell: (info) => <RowActions expense={info.row.original} categories={categories} />,
+      cell: (info) => (
+        <RowActions
+          expense={info.row.original}
+          categories={categories}
+          currency={currency}
+          rate={rate}
+        />
+      ),
     }),
   ]);
 
