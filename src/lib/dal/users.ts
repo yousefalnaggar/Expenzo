@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal/session";
-import type { Currency } from "@/lib/exchange-rates";
+import type { Currency } from "@/lib/currency";
 
 // Registration/login run before a session exists, so these two functions are
 // the deliberate exception to "every DAL function calls requireUserId() first".

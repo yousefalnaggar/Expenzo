@@ -7,14 +7,12 @@ export function SummaryCards({
   avgPerDayCents,
   percentVsLastMonth,
   currency,
-  rate,
 }: {
   totalThisMonthCents: number;
   transactionCount: number;
   avgPerDayCents: number;
   percentVsLastMonth: number | null;
   currency: string;
-  rate: number;
 }) {
   const trendLabel =
     percentVsLastMonth === null
@@ -34,9 +32,7 @@ export function SummaryCards({
           <CardTitle className="text-muted-foreground text-sm font-normal">This month</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-semibold">
-            {formatCurrency(totalThisMonthCents, currency, rate)}
-          </p>
+          <p className="text-2xl font-semibold">{formatCurrency(totalThisMonthCents, currency)}</p>
         </CardContent>
       </Card>
       <Card>
@@ -60,7 +56,7 @@ export function SummaryCards({
           <CardTitle className="text-muted-foreground text-sm font-normal">Avg/day</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-semibold">{formatCurrency(avgPerDayCents, currency, rate)}</p>
+          <p className="text-2xl font-semibold">{formatCurrency(avgPerDayCents, currency)}</p>
         </CardContent>
       </Card>
     </div>

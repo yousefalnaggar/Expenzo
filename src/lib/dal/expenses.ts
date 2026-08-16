@@ -3,6 +3,7 @@ import { endOfMonth, format, startOfMonth, subMonths } from "date-fns";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal/session";
 import { getCategories } from "@/lib/dal/categories";
+import { convertCents, type Currency } from "@/lib/currency";
 
 // Filter params (from/to/categoryId/search) are accepted here so the DAL
 // doesn't need reshaping in Phase 4 — the URL-based filter UI just needs to
@@ -34,6 +35,11 @@ export async function getExpenses(
       : {}),
   };
 
+  // Sorting "by amount" compares each row's native amountCents directly. Each
+  // expense keeps the currency it was entered in (see createExpense), so if a
+  // user has expenses in more than one currency, this ordering isn't
+  // currency-normalized — a known, minor limitation rather than silently
+  // wrong data (values themselves are always exact in their own currency).
   const orderBy = sortBy === "amount" ? { amountCents: sortOrder } : { date: sortOrder };
 
   const [items, total] = await Promise.all([
@@ -59,6 +65,7 @@ export async function getExpenseById(id: string) {
 
 export async function createExpense(input: {
   amountCents: number;
+  currency: Currency;
   description: string;
   date: Date;
   note?: string;
@@ -74,6 +81,7 @@ export async function updateExpense(
   id: string,
   input: {
     amountCents: number;
+    currency: Currency;
     description: string;
     date: Date;
     note?: string;
@@ -102,7 +110,10 @@ export async function hasAnyExpenses(): Promise<boolean> {
   return expense !== null;
 }
 
-export async function getDashboardSummary() {
+export async function getDashboardSummary(
+  displayCurrency: Currency,
+  rates: Record<Currency, number>,
+) {
   const userId = await requireUserId();
   const now = new Date();
   const thisMonthStart = startOfMonth(now);
@@ -110,21 +121,30 @@ export async function getDashboardSummary() {
   const lastMonthStart = startOfMonth(subMonths(now, 1));
   const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
-  const [thisMonth, lastMonth] = await Promise.all([
-    prisma.expense.aggregate({
+  // Expenses can be in different native currencies, so sums have to be
+  // normalized in JS (convertCents) — a DB-level SUM would add raw cents
+  // across currencies, which is meaningless.
+  const [thisMonthRows, lastMonthRows] = await Promise.all([
+    prisma.expense.findMany({
       where: { userId, date: { gte: thisMonthStart, lte: thisMonthEnd } },
-      _sum: { amountCents: true },
-      _count: true,
+      select: { amountCents: true, currency: true },
     }),
-    prisma.expense.aggregate({
+    prisma.expense.findMany({
       where: { userId, date: { gte: lastMonthStart, lte: lastMonthEnd } },
-      _sum: { amountCents: true },
+      select: { amountCents: true, currency: true },
     }),
   ]);
 
-  const totalThisMonthCents = thisMonth._sum.amountCents ?? 0;
-  const totalLastMonthCents = lastMonth._sum.amountCents ?? 0;
-  const transactionCount = thisMonth._count;
+  const sumIn = (rows: { amountCents: number; currency: string }[]) =>
+    rows.reduce(
+      (sum, row) =>
+        sum + convertCents(row.amountCents, row.currency as Currency, displayCurrency, rates),
+      0,
+    );
+
+  const totalThisMonthCents = sumIn(thisMonthRows);
+  const totalLastMonthCents = sumIn(lastMonthRows);
+  const transactionCount = thisMonthRows.length;
   const dayOfMonth = now.getDate();
   const avgPerDayCents = Math.round(totalThisMonthCents / dayOfMonth);
   const percentVsLastMonth =
@@ -137,43 +157,55 @@ export async function getDashboardSummary() {
 
 const UNCATEGORIZED_COLOR = "#64748b";
 
-export async function getSpendByCategory() {
+export async function getSpendByCategory(
+  displayCurrency: Currency,
+  rates: Record<Currency, number>,
+) {
   const userId = await requireUserId();
   const now = new Date();
 
-  const [grouped, categories] = await Promise.all([
-    prisma.expense.groupBy({
-      by: ["categoryId"],
+  const [rows, categories] = await Promise.all([
+    prisma.expense.findMany({
       where: { userId, date: { gte: startOfMonth(now), lte: endOfMonth(now) } },
-      _sum: { amountCents: true },
+      select: { categoryId: true, amountCents: true, currency: true },
     }),
     getCategories(),
   ]);
 
   const categoryById = new Map(categories.map((c) => [c.id, c]));
+  const totalsByCategory = new Map<string | null, number>();
+  for (const row of rows) {
+    const converted = convertCents(
+      row.amountCents,
+      row.currency as Currency,
+      displayCurrency,
+      rates,
+    );
+    totalsByCategory.set(row.categoryId, (totalsByCategory.get(row.categoryId) ?? 0) + converted);
+  }
 
-  return grouped
-    .map((group) => {
-      const category = group.categoryId ? categoryById.get(group.categoryId) : undefined;
+  return Array.from(totalsByCategory.entries())
+    .map(([categoryId, totalCents]) => {
+      const category = categoryId ? categoryById.get(categoryId) : undefined;
       return {
-        categoryId: group.categoryId,
+        categoryId,
         name: category?.name ?? "Uncategorized",
         color: category?.color ?? UNCATEGORIZED_COLOR,
-        totalCents: group._sum.amountCents ?? 0,
+        totalCents,
       };
     })
     .filter((group) => group.totalCents > 0)
     .sort((a, b) => b.totalCents - a.totalCents);
 }
 
-export async function getMonthlyTrend() {
+export async function getMonthlyTrend(displayCurrency: Currency, rates: Record<Currency, number>) {
   const userId = await requireUserId();
   const now = new Date();
   const rangeStart = startOfMonth(subMonths(now, 5));
 
   const expenses = await prisma.expense.findMany({
     where: { userId, date: { gte: rangeStart } },
-    select: { date: true, amountCents: true },
+    select: { date: true, amountCents: true, currency: true },
   });
 
   const buckets = Array.from({ length: 6 }, (_, i) => {
@@ -185,7 +217,14 @@ export async function getMonthlyTrend() {
   for (const expense of expenses) {
     const key = format(expense.date, "yyyy-MM");
     const bucket = bucketByKey.get(key);
-    if (bucket) bucket.totalCents += expense.amountCents;
+    if (bucket) {
+      bucket.totalCents += convertCents(
+        expense.amountCents,
+        expense.currency as Currency,
+        displayCurrency,
+        rates,
+      );
+    }
   }
 
   return buckets;

@@ -8,7 +8,7 @@ import {
   hasAnyExpenses,
 } from "@/lib/dal/expenses";
 import { getUserPreferredCurrency } from "@/lib/dal/users";
-import { getExchangeRate, type Currency } from "@/lib/exchange-rates";
+import { getAllExchangeRates, type Currency } from "@/lib/exchange-rates";
 import { Button } from "@/components/ui/button";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { SpendByCategoryChart } from "@/components/dashboard/spend-by-category-chart";
@@ -42,24 +42,25 @@ export default async function DashboardPage() {
 }
 
 async function DashboardContent() {
-  const currency = await getUserPreferredCurrency();
-  const [summary, spendByCategory, monthlyTrend, { items: recentExpenses }, rate] =
-    await Promise.all([
-      getDashboardSummary(),
-      getSpendByCategory(),
-      getMonthlyTrend(),
-      getExpenses({ pageSize: 5 }),
-      getExchangeRate(currency as Currency),
-    ]);
+  const currencyRaw = await getUserPreferredCurrency();
+  const currency = currencyRaw as Currency;
+  const rates = await getAllExchangeRates();
+
+  const [summary, spendByCategory, monthlyTrend, { items: recentExpenses }] = await Promise.all([
+    getDashboardSummary(currency, rates),
+    getSpendByCategory(currency, rates),
+    getMonthlyTrend(currency, rates),
+    getExpenses({ pageSize: 5 }),
+  ]);
 
   return (
     <>
-      <SummaryCards {...summary} currency={currency} rate={rate} />
+      <SummaryCards {...summary} currency={currency} />
       <div className="grid gap-4 md:grid-cols-2">
-        <SpendByCategoryChart data={spendByCategory} currency={currency} rate={rate} />
-        <MonthlyTrendChart data={monthlyTrend} currency={currency} rate={rate} />
+        <SpendByCategoryChart data={spendByCategory} currency={currency} />
+        <MonthlyTrendChart data={monthlyTrend} currency={currency} />
       </div>
-      <RecentExpenses expenses={recentExpenses} currency={currency} rate={rate} />
+      <RecentExpenses expenses={recentExpenses} currency={currency} rates={rates} />
     </>
   );
 }

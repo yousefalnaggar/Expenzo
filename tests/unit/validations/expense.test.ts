@@ -5,6 +5,7 @@ describe("expenseSchema", () => {
   const valid = {
     description: "Coffee",
     amount: "4.50",
+    currency: "USD",
     date: "2024-01-01",
     categoryId: "",
     note: "",
@@ -58,6 +59,16 @@ describe("expenseSchema", () => {
 
   it("rejects a note over 500 characters", () => {
     const result = expenseSchema.safeParse({ ...valid, note: "a".repeat(501) });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts EGP and EUR currencies", () => {
+    expect(expenseSchema.safeParse({ ...valid, currency: "EGP" }).success).toBe(true);
+    expect(expenseSchema.safeParse({ ...valid, currency: "EUR" }).success).toBe(true);
+  });
+
+  it("rejects an unsupported currency", () => {
+    const result = expenseSchema.safeParse({ ...valid, currency: "GBP" });
     expect(result.success).toBe(false);
   });
 });

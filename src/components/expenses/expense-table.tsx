@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { MoreHorizontal } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { formatCurrency } from "@/lib/utils";
+import { convertCents, type Currency } from "@/lib/currency";
 import {
   Table,
   TableBody,
@@ -48,17 +49,7 @@ type Category = { id: string; name: string; color: string };
 
 const columnHelper = createColumnHelper<typeof features, ExpenseRow>();
 
-function RowActions({
-  expense,
-  categories,
-  currency,
-  rate,
-}: {
-  expense: ExpenseRow;
-  categories: Category[];
-  currency: string;
-  rate: number;
-}) {
+function RowActions({ expense, categories }: { expense: ExpenseRow; categories: Category[] }) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -88,11 +79,12 @@ function RowActions({
         submitLabel="Save changes"
         action={updateExpense.bind(null, expense.id)}
         categories={categories}
-        currency={currency}
-        rate={rate}
+        // Editing keeps the expense's own original currency and exact
+        // amount — no conversion, so re-saving without changes never drifts.
+        currency={expense.currency as Currency}
         defaultValues={{
           description: expense.description,
-          amount: (expense.amountCents * rate) / 100,
+          amount: expense.amountCents / 100,
           date: expense.date,
           categoryId: expense.categoryId ?? "",
           note: expense.note ?? "",
@@ -157,15 +149,15 @@ export function ExpenseTable({
   sortOrder,
   searchParams,
   currency,
-  rate,
+  rates,
 }: {
   expenses: ExpenseRow[];
   categories: Category[];
   sortBy: "date" | "amount";
   sortOrder: "asc" | "desc";
   searchParams: Record<string, string | undefined>;
-  currency: string;
-  rate: number;
+  currency: Currency;
+  rates: Record<Currency, number>;
 }) {
   const columns = columnHelper.columns([
     columnHelper.accessor("date", {
@@ -209,19 +201,21 @@ export function ExpenseTable({
           searchParams={searchParams}
         />
       ),
-      cell: (info) => formatCurrency(info.getValue(), currency, rate),
+      cell: (info) => {
+        const expense = info.row.original;
+        const converted = convertCents(
+          info.getValue(),
+          expense.currency as Currency,
+          currency,
+          rates,
+        );
+        return formatCurrency(converted, currency);
+      },
       meta: { align: "right" as const },
     }),
     columnHelper.display({
       id: "actions",
-      cell: (info) => (
-        <RowActions
-          expense={info.row.original}
-          categories={categories}
-          currency={currency}
-          rate={rate}
-        />
-      ),
+      cell: (info) => <RowActions expense={info.row.original} categories={categories} />,
     }),
   ]);
 

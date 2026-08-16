@@ -1,6 +1,7 @@
 import "server-only";
+import { CURRENCIES, type Currency } from "@/lib/currency";
 
-export type Currency = "USD" | "EGP" | "EUR";
+export type { Currency };
 
 // Fallback only — used when the live API is unreachable or misconfigured, so
 // the app never hard-fails just because an external service hiccuped.
@@ -39,4 +40,15 @@ export async function getExchangeRate(target: Currency): Promise<number> {
     console.warn(`Falling back to a static exchange rate for ${target}:`, error);
     return FALLBACK_RATES[target];
   }
+}
+
+// Every USD→currency rate, so amounts stored in different native currencies
+// (each expense keeps the currency it was entered in) can be normalized for
+// display, sorting, or aggregation.
+export async function getAllExchangeRates(): Promise<Record<Currency, number>> {
+  const rates = await Promise.all(CURRENCIES.map((currency) => getExchangeRate(currency)));
+  return Object.fromEntries(CURRENCIES.map((currency, i) => [currency, rates[i]])) as Record<
+    Currency,
+    number
+  >;
 }

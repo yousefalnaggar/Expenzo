@@ -11,6 +11,7 @@ import {
 import { ExpenseForm } from "@/components/expenses/expense-form";
 import type { ExpenseInput } from "@/lib/validations/expense";
 import type { ActionResult } from "@/lib/actions/expense-actions";
+import type { Currency } from "@/lib/currency";
 
 type Category = { id: string; name: string; color: string };
 type ExpenseAction = (prev: ActionResult | undefined, formData: FormData) => Promise<ActionResult>;
@@ -25,7 +26,6 @@ export function ExpenseDialog({
   defaultValues,
   submitLabel,
   currency,
-  rate,
 }: {
   // Uncontrolled mode: pass `trigger`, the dialog owns its own open state.
   // Controlled mode (e.g. opened from a dropdown menu item, which must not
@@ -38,8 +38,7 @@ export function ExpenseDialog({
   categories: Category[];
   defaultValues?: Partial<ExpenseInput> & { amount?: number };
   submitLabel: string;
-  currency: string;
-  rate: number;
+  currency: Currency;
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = openProp ?? uncontrolledOpen;
@@ -59,7 +58,6 @@ export function ExpenseDialog({
             defaultValues={defaultValues}
             submitLabel={submitLabel}
             currency={currency}
-            rate={rate}
             onSuccess={() => setOpen(false)}
           />
         )}

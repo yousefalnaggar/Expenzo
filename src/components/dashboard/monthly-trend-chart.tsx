@@ -14,15 +14,7 @@ import { formatCurrency } from "@/lib/utils";
 
 type MonthBucket = { key: string; label: string; totalCents: number };
 
-export function MonthlyTrendChart({
-  data,
-  currency,
-  rate,
-}: {
-  data: MonthBucket[];
-  currency: string;
-  rate: number;
-}) {
+export function MonthlyTrendChart({ data, currency }: { data: MonthBucket[]; currency: string }) {
   return (
     <Card>
       <CardHeader>
@@ -38,10 +30,10 @@ export function MonthlyTrendChart({
                 tickLine={false}
                 axisLine={false}
                 fontSize={12}
-                tickFormatter={(value: number) => formatCurrency(value, currency, rate)}
+                tickFormatter={(value: number) => formatCurrency(value, currency)}
                 width={72}
               />
-              <Tooltip formatter={(value) => formatCurrency(Number(value), currency, rate)} />
+              <Tooltip formatter={(value) => formatCurrency(Number(value), currency)} />
               <Line
                 type="monotone"
                 dataKey="totalCents"
@@ -55,7 +47,7 @@ export function MonthlyTrendChart({
         <ul className="sr-only">
           {data.map((bucket) => (
             <li key={bucket.key}>
-              {bucket.label}: {formatCurrency(bucket.totalCents, currency, rate)}
+              {bucket.label}: {formatCurrency(bucket.totalCents, currency)}
             </li>
           ))}
         </ul>

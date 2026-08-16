@@ -9,11 +9,9 @@ type CategorySlice = { categoryId: string | null; name: string; color: string; t
 export function SpendByCategoryChart({
   data,
   currency,
-  rate,
 }: {
   data: CategorySlice[];
   currency: string;
-  rate: number;
 }) {
   if (data.length === 0) {
     return (
@@ -51,7 +49,7 @@ export function SpendByCategoryChart({
                   <Cell key={slice.categoryId ?? "uncategorized"} fill={slice.color} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => formatCurrency(Number(value), currency, rate)} />
+              <Tooltip formatter={(value) => formatCurrency(Number(value), currency)} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -59,7 +57,7 @@ export function SpendByCategoryChart({
         <ul className="sr-only">
           {data.map((slice) => (
             <li key={slice.categoryId ?? "uncategorized"}>
-              {slice.name}: {formatCurrency(slice.totalCents, currency, rate)}
+              {slice.name}: {formatCurrency(slice.totalCents, currency)}
             </li>
           ))}
         </ul>

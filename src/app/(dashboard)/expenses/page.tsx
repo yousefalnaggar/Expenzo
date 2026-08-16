@@ -1,7 +1,7 @@
 import { getExpenses } from "@/lib/dal/expenses";
 import { getCategories } from "@/lib/dal/categories";
 import { getUserPreferredCurrency } from "@/lib/dal/users";
-import { getExchangeRate, type Currency } from "@/lib/exchange-rates";
+import { getAllExchangeRates, type Currency } from "@/lib/exchange-rates";
 import { ExpenseTable } from "@/components/expenses/expense-table";
 import { ExpenseDialog } from "@/components/expenses/expense-dialog";
 import { ExpenseFilters } from "@/components/expenses/expense-filters";
@@ -29,8 +29,9 @@ export default async function ExpensesPage({
   const sortBy = params.sortBy === "amount" ? "amount" : "date";
   const sortOrder = params.sortOrder === "asc" ? "asc" : "desc";
 
-  const currency = await getUserPreferredCurrency();
-  const [{ items: expenses, total, pageSize }, categories, rate] = await Promise.all([
+  const currencyRaw = await getUserPreferredCurrency();
+  const currency = currencyRaw as Currency;
+  const [{ items: expenses, total, pageSize }, categories, rates] = await Promise.all([
     getExpenses({
       search: params.search,
       categoryId: params.categoryId,
@@ -41,7 +42,7 @@ export default async function ExpensesPage({
       sortOrder,
     }),
     getCategories(),
-    getExchangeRate(currency as Currency),
+    getAllExchangeRates(),
   ]);
 
   return (
@@ -55,7 +56,6 @@ export default async function ExpensesPage({
           action={createExpense}
           categories={categories}
           currency={currency}
-          rate={rate}
         />
       </div>
       <ExpenseFilters categories={categories} />
@@ -74,7 +74,7 @@ export default async function ExpensesPage({
             sortOrder={sortOrder}
             searchParams={params}
             currency={currency}
-            rate={rate}
+            rates={rates}
           />
           <ExpensePagination page={page} pageSize={pageSize} total={total} searchParams={params} />
         </>

@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import type { z } from "zod";
 import { expenseSchema, type ExpenseInput } from "@/lib/validations/expense";
 import type { ActionResult } from "@/lib/actions/expense-actions";
+import type { Currency } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,18 +30,17 @@ export function ExpenseForm({
   defaultValues,
   submitLabel,
   currency,
-  rate,
   onSuccess,
 }: {
   action: ExpenseAction;
   categories: Category[];
   defaultValues?: Partial<ExpenseInput> & { amount?: number };
   submitLabel: string;
-  // `amount` in defaultValues and the form field is always in `currency` (the
-  // user's display currency), converted to/from USD cents via `rate` at the
-  // form boundary — the schema/action underneath still deals in USD dollars.
-  currency: string;
-  rate: number;
+  // The expense is entered and stored in `currency` as-is — no conversion at
+  // the form boundary, so what you type is exactly what gets saved. For a new
+  // expense this is the account's current display currency; when editing, an
+  // existing expense keeps its own original currency (see expense-table.tsx).
+  currency: Currency;
   onSuccess: () => void;
 }) {
   const [state, formAction, isPending] = useActionState(action, undefined);
@@ -50,6 +50,7 @@ export function ExpenseForm({
     defaultValues: {
       description: defaultValues?.description ?? "",
       amount: defaultValues?.amount,
+      currency,
       date: defaultValues?.date ?? new Date(),
       categoryId: defaultValues?.categoryId ?? "",
       note: defaultValues?.note ?? "",
@@ -65,7 +66,8 @@ export function ExpenseForm({
   const onSubmit = form.handleSubmit((data) => {
     const formData = new FormData();
     formData.set("description", data.description);
-    formData.set("amount", String(data.amount / rate));
+    formData.set("amount", String(data.amount));
+    formData.set("currency", currency);
     formData.set("date", format(data.date, "yyyy-MM-dd"));
     formData.set("categoryId", data.categoryId ?? "");
     formData.set("note", data.note ?? "");
