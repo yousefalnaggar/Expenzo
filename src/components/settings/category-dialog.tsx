@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ export function CategoryDialog({
   action,
   defaultValues,
   submitLabel,
+  successMessage,
 }: {
   trigger?: React.ReactElement;
   open?: boolean;
@@ -30,6 +32,7 @@ export function CategoryDialog({
   action: CategoryAction;
   defaultValues?: Partial<CategoryInput>;
   submitLabel: string;
+  successMessage: string;
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = openProp ?? uncontrolledOpen;
@@ -47,7 +50,10 @@ export function CategoryDialog({
             action={action}
             defaultValues={defaultValues}
             submitLabel={submitLabel}
-            onSuccess={() => setOpen(false)}
+            onSuccess={() => {
+              setOpen(false);
+              toast.success(successMessage);
+            }}
           />
         )}
       </DialogContent>

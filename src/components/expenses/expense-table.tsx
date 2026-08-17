@@ -82,6 +82,7 @@ function RowActions({ expense, categories }: { expense: ExpenseRow; categories: 
         // Editing keeps the expense's own original currency and exact
         // amount — no conversion, so re-saving without changes never drifts.
         currency={expense.currency as Currency}
+        successMessage="Expense updated"
         defaultValues={{
           description: expense.description,
           amount: expense.amountCents / 100,

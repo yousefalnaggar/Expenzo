@@ -52,6 +52,7 @@ function CategoryRow({ category }: { category: Category }) {
         submitLabel="Save changes"
         action={updateCategory.bind(null, category.id)}
         defaultValues={{ name: category.name, color: category.color }}
+        successMessage="Category updated"
       />
 
       <DeleteCategoryDialog

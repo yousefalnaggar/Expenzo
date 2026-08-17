@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ export function ExpenseDialog({
   defaultValues,
   submitLabel,
   currency,
+  successMessage,
 }: {
   // Uncontrolled mode: pass `trigger`, the dialog owns its own open state.
   // Controlled mode (e.g. opened from a dropdown menu item, which must not
@@ -39,6 +41,7 @@ export function ExpenseDialog({
   defaultValues?: Partial<ExpenseInput> & { amount?: number };
   submitLabel: string;
   currency: Currency;
+  successMessage: string;
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = openProp ?? uncontrolledOpen;
@@ -58,7 +61,11 @@ export function ExpenseDialog({
             defaultValues={defaultValues}
             submitLabel={submitLabel}
             currency={currency}
-            onSuccess={() => setOpen(false)}
+            onSuccess={() => {
+              console.log("DEBUG onSuccess fired", successMessage);
+              setOpen(false);
+              toast.success(successMessage);
+            }}
           />
         )}
       </DialogContent>

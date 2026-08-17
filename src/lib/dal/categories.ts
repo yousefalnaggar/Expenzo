@@ -2,6 +2,27 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal/session";
 
+// Every new account starts with these instead of an empty list, so the app
+// isn't a blank slate on first login. Applied at account-creation time only
+// (see registerUser in auth-actions.ts and the `createUser` event in
+// auth.ts for the Google OAuth path) — like createUser/findUserByEmail in
+// dal/users.ts, this runs before a session exists, so it's the deliberate
+// exception to "every DAL function calls requireUserId() first".
+export const DEFAULT_CATEGORIES = [
+  { name: "Housing", color: "#8b5cf6" },
+  { name: "Utilities", color: "#14b8a6" },
+  { name: "Food", color: "#f97316" },
+  { name: "Transportation", color: "#3b82f6" },
+  { name: "Healthcare", color: "#ef4444" },
+  { name: "Personal/Lifestyle", color: "#ec4899" },
+] as const;
+
+export async function seedDefaultCategories(userId: string) {
+  await prisma.category.createMany({
+    data: DEFAULT_CATEGORIES.map((category) => ({ ...category, userId })),
+  });
+}
+
 export async function getCategories() {
   const userId = await requireUserId();
   return prisma.category.findMany({

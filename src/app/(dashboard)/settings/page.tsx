@@ -34,6 +34,7 @@ export default async function SettingsPage() {
           title="Add category"
           submitLabel="Add category"
           action={createCategory}
+          successMessage="Category added"
         />
       </div>
       <CategoryList categories={categories} />

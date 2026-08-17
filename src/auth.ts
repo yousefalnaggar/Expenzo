@@ -5,6 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { loginSchema } from "@/lib/validations/auth";
+import { seedDefaultCategories } from "@/lib/dal/categories";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -32,6 +33,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  events: {
+    // Fires only for adapter-managed creation (Google OAuth first sign-in).
+    // Credentials registration bypasses the adapter — that path seeds
+    // categories itself in registerUser (src/lib/actions/auth-actions.ts).
+    async createUser({ user }) {
+      if (user.id) await seedDefaultCategories(user.id);
+    },
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) token.sub = user.id;

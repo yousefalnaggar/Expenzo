@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { signOutUser } from "@/lib/actions/auth-actions";
 import { Button } from "@/components/ui/button";
 import { NavLinks } from "@/components/layout/nav-links";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export async function Navbar() {
   const session = await auth();
@@ -20,6 +21,7 @@ export async function Navbar() {
           <span className="text-muted-foreground hidden text-sm sm:inline">
             {session?.user?.email}
           </span>
+          <ThemeToggle />
           <form action={signOutUser}>
             <Button type="submit" variant="outline" size="sm">
               Sign out

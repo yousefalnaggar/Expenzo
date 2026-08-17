@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -43,7 +43,8 @@ export function ExpenseForm({
   currency: Currency;
   onSuccess: () => void;
 }) {
-  const [state, formAction, isPending] = useActionState(action, undefined);
+  const [isPending, startTransition] = useTransition();
+  const [state, setState] = useState<ActionResult | undefined>(undefined);
 
   const form = useForm<z.input<typeof expenseSchema>, unknown, ExpenseInput>({
     resolver: zodResolver(expenseSchema),
@@ -51,15 +52,14 @@ export function ExpenseForm({
       description: defaultValues?.description ?? "",
       amount: defaultValues?.amount,
       currency,
-      date: defaultValues?.date ?? new Date(),
+      // Native <input type="date"> only accepts/displays a "yyyy-MM-dd"
+      // string — handing it a Date object (RHF's uncontrolled defaultValue
+      // assigns it directly to input.value) silently renders blank.
+      date: format(defaultValues?.date ?? new Date(), "yyyy-MM-dd"),
       categoryId: defaultValues?.categoryId ?? "",
       note: defaultValues?.note ?? "",
     },
   });
-
-  useEffect(() => {
-    if (state?.ok) onSuccess();
-  }, [state, onSuccess]);
 
   const categoryId = useWatch({ control: form.control, name: "categoryId" });
 
@@ -71,7 +71,11 @@ export function ExpenseForm({
     formData.set("date", format(data.date, "yyyy-MM-dd"));
     formData.set("categoryId", data.categoryId ?? "");
     formData.set("note", data.note ?? "");
-    startTransition(() => formAction(formData));
+    startTransition(async () => {
+      const result = await action(undefined, formData);
+      setState(result);
+      if (result.ok) onSuccess();
+    });
   });
 
   return (

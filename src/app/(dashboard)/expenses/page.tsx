@@ -56,6 +56,7 @@ export default async function ExpensesPage({
           action={createExpense}
           categories={categories}
           currency={currency}
+          successMessage="Expense added"
         />
       </div>
       <ExpenseFilters categories={categories} />

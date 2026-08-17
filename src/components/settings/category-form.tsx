@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { categorySchema, type CategoryInput } from "@/lib/validations/category";
@@ -22,7 +22,8 @@ export function CategoryForm({
   submitLabel: string;
   onSuccess: () => void;
 }) {
-  const [state, formAction, isPending] = useActionState(action, undefined);
+  const [isPending, startTransition] = useTransition();
+  const [state, setState] = useState<ActionResult | undefined>(undefined);
 
   const form = useForm<CategoryInput>({
     resolver: zodResolver(categorySchema),
@@ -32,17 +33,17 @@ export function CategoryForm({
     },
   });
 
-  useEffect(() => {
-    if (state?.ok) onSuccess();
-  }, [state, onSuccess]);
-
   const color = useWatch({ control: form.control, name: "color" });
 
   const onSubmit = form.handleSubmit((data) => {
     const formData = new FormData();
     formData.set("name", data.name);
     formData.set("color", data.color);
-    startTransition(() => formAction(formData));
+    startTransition(async () => {
+      const result = await action(undefined, formData);
+      setState(result);
+      if (result.ok) onSuccess();
+    });
   });
 
   return (

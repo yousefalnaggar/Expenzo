@@ -1,7 +1,8 @@
 "use client";
 
-import { startTransition, useActionState, useState } from "react";
-import { updateCurrency } from "@/lib/actions/user-actions";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { updateCurrency, type ActionResult } from "@/lib/actions/user-actions";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -18,7 +19,8 @@ const CURRENCIES = [
 ];
 
 export function CurrencyForm({ currentCurrency }: { currentCurrency: string }) {
-  const [state, formAction, isPending] = useActionState(updateCurrency, undefined);
+  const [isPending, startTransition] = useTransition();
+  const [state, setState] = useState<ActionResult | undefined>(undefined);
   const [value, setValue] = useState(currentCurrency);
 
   const onValueChange = (next: string | null) => {
@@ -26,7 +28,11 @@ export function CurrencyForm({ currentCurrency }: { currentCurrency: string }) {
     setValue(next);
     const formData = new FormData();
     formData.set("currency", next);
-    startTransition(() => formAction(formData));
+    startTransition(async () => {
+      const result = await updateCurrency(undefined, formData);
+      setState(result);
+      if (result.ok) toast.success("Currency updated");
+    });
   };
 
   return (
@@ -45,9 +51,6 @@ export function CurrencyForm({ currentCurrency }: { currentCurrency: string }) {
         </SelectContent>
       </Select>
       {isPending && <p className="text-muted-foreground text-sm">Saving…</p>}
-      {state?.ok && !isPending && (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400">Saved</p>
-      )}
       {state && !state.ok && <p className="text-destructive text-sm">{state.error}</p>}
     </div>
   );

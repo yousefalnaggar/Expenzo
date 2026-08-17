@@ -21,6 +21,7 @@ export function NavLinks() {
           <Link
             key={link.href}
             href={link.href}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
               "font-medium transition-colors",
               isActive ? "text-primary" : "text-muted-foreground hover:text-foreground",

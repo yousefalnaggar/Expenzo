@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ export function DeleteCategoryDialog({
       const result = await deleteCategory(categoryId);
       if (result.ok) {
         onOpenChange(false);
+        toast.success("Category deleted");
       } else {
         setError(result.error);
       }
