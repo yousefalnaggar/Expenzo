@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/expenses", "/settings"];
+const PROTECTED_PREFIXES = ["/dashboard", "/expenses", "/categories", "/settings"];
 
 // UX-level redirect only — NOT the security boundary. Next.js middleware-only
 // auth is bypassable (CVE-2025-29927); the real gate is requireUserId() in the
@@ -18,5 +18,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/expenses/:path*", "/settings/:path*"],
+  matcher: ["/dashboard/:path*", "/expenses/:path*", "/categories/:path*", "/settings/:path*"],
 };

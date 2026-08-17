@@ -10,8 +10,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CategoryDialog } from "@/components/settings/category-dialog";
-import { DeleteCategoryDialog } from "@/components/settings/delete-category-dialog";
+import { CategoryDialog } from "@/components/categories/category-dialog";
+import { DeleteCategoryDialog } from "@/components/categories/delete-category-dialog";
 import { updateCategory } from "@/lib/actions/category-actions";
 
 function CategoryRow({ category }: { category: Category }) {

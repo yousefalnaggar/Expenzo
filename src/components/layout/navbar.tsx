@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { signOutUser } from "@/lib/actions/auth-actions";
-import { Button } from "@/components/ui/button";
 import { NavLinks } from "@/components/layout/nav-links";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/layout/user-menu";
 
 export async function Navbar() {
   const session = await auth();
@@ -18,15 +17,12 @@ export async function Navbar() {
           <NavLinks />
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-muted-foreground hidden text-sm sm:inline">
-            {session?.user?.email}
-          </span>
           <ThemeToggle />
-          <form action={signOutUser}>
-            <Button type="submit" variant="outline" size="sm">
-              Sign out
-            </Button>
-          </form>
+          <UserMenu
+            name={session?.user?.name ?? null}
+            email={session?.user?.email ?? null}
+            image={session?.user?.image ?? null}
+          />
         </div>
       </div>
     </header>

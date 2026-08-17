@@ -7,7 +7,7 @@ import { prisma } from "@/lib/db";
 import { loginSchema } from "@/lib/validations/auth";
 import { seedDefaultCategories } from "@/lib/dal/categories";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
@@ -42,8 +42,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) token.sub = user.id;
+      // Fires when updateProfile() (src/lib/actions/user-actions.ts) calls
+      // unstable_update() after a name/email/avatar change, so the JWT
+      // reflects the edit immediately instead of waiting for the next login.
+      if (trigger === "update" && session?.user) {
+        if (session.user.name) token.name = session.user.name;
+        if (session.user.email) token.email = session.user.email;
+        // "image" in ... (not truthiness) so explicitly clearing the photo
+        // back to null — see removeAvatar() — actually takes effect instead
+        // of being skipped as falsy.
+        if ("image" in session.user) token.picture = session.user.image;
+      }
       return token;
     },
     async session({ session, token }) {

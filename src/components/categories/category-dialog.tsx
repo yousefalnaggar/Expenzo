@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CategoryForm } from "@/components/settings/category-form";
+import { CategoryForm } from "@/components/categories/category-form";
 import type { CategoryInput } from "@/lib/validations/category";
 import type { ActionResult } from "@/lib/actions/category-actions";
 

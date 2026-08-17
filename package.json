@@ -22,6 +22,7 @@
     "@hookform/resolvers": "^5.7.1",
     "@prisma/adapter-pg": "^6.19.3",
     "@prisma/client": "^6.19.3",
+    "@supabase/supabase-js": "^2.112.3",
     "@tanstack/react-table": "^9.1.2",
     "@tanstack/table-core": "^9.1.2",
     "bcryptjs": "^3.0.3",
