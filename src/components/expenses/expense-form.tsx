@@ -112,7 +112,11 @@ export function ExpenseForm({
       <div className="grid gap-1.5">
         <Label htmlFor="categoryId">Category</Label>
         <Select
-          value={categoryId || undefined}
+          // Always pass the actual string ("" for none), never `undefined` —
+          // Base UI locks in controlled-vs-uncontrolled from the first
+          // render's value, so switching between them once a category is
+          // picked triggers a console warning (and is a real anti-pattern).
+          value={categoryId}
           onValueChange={(value) => form.setValue("categoryId", value ?? "")}
         >
           <SelectTrigger id="categoryId" className="w-full">
