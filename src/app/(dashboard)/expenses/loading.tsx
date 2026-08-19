@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
+    <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-6 sm:px-6">
       <div className="flex items-center justify-between">
         <div className="bg-muted h-6 w-24 animate-pulse rounded" />
         <div className="bg-muted h-8 w-28 animate-pulse rounded" />

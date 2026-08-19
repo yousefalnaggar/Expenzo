@@ -11,7 +11,7 @@ import {
   type TableFeatures,
 } from "@tanstack/table-core";
 import { format } from "date-fns";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, StickyNote } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { formatCurrency } from "@/lib/utils";
 import { convertCents, type Currency } from "@/lib/currency";
@@ -30,6 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ExpenseDialog } from "@/components/expenses/expense-dialog";
 import { DeleteExpenseDialog } from "@/components/expenses/delete-expense-dialog";
 import { updateExpense } from "@/lib/actions/expense-actions";
@@ -48,6 +49,41 @@ type ExpenseRow = Prisma.ExpenseGetPayload<{ include: { category: true } }>;
 type Category = { id: string; name: string; color: string };
 
 const columnHelper = createColumnHelper<typeof features, ExpenseRow>();
+
+function NoteButton({ note }: { note: string }) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+          >
+            <StickyNote className="size-3.5" />
+            <span className="sr-only">View note</span>
+          </button>
+        }
+      />
+      <PopoverContent>
+        <p className="text-muted-foreground mb-1 text-xs font-medium">Note</p>
+        <p className="whitespace-pre-wrap">{note}</p>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function CategoryBadge({ category }: { category: Category | null }) {
+  if (!category) return <span className="text-muted-foreground">Uncategorized</span>;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className="inline-block size-2.5 shrink-0 rounded-full"
+        style={{ backgroundColor: category.color }}
+      />
+      {category.name}
+    </span>
+  );
+}
 
 function RowActions({ expense, categories }: { expense: ExpenseRow; categories: Category[] }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -143,6 +179,53 @@ function SortableHeader({
   );
 }
 
+// Below `sm` there isn't room for 5 table columns without hiding data or
+// forcing a horizontal scroll — a stacked card per expense shows date,
+// description, category, amount, and note in full at any width instead.
+function MobileExpenseList({
+  expenses,
+  categories,
+  currency,
+  rates,
+}: {
+  expenses: ExpenseRow[];
+  categories: Category[];
+  currency: Currency;
+  rates: Record<Currency, number>;
+}) {
+  return (
+    <ul className="divide-y sm:hidden">
+      {expenses.map((expense) => {
+        const converted = convertCents(
+          expense.amountCents,
+          expense.currency as Currency,
+          currency,
+          rates,
+        );
+        return (
+          <li key={expense.id} className="flex items-start justify-between gap-2 py-2.5">
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="flex items-center gap-1.5 text-sm font-medium">
+                <span className="truncate">{expense.description}</span>
+                {expense.note && <NoteButton note={expense.note} />}
+              </span>
+              <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                <span>{format(expense.date, "MMM d, yyyy")}</span>
+                <span>·</span>
+                <CategoryBadge category={expense.category} />
+              </span>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <span className="text-sm font-medium">{formatCurrency(converted, currency)}</span>
+              <RowActions expense={expense} categories={categories} />
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function ExpenseTable({
   expenses,
   categories,
@@ -175,22 +258,19 @@ export function ExpenseTable({
     }),
     columnHelper.accessor("description", {
       header: "Description",
-    }),
-    columnHelper.accessor("category", {
-      header: "Category",
       cell: (info) => {
-        const category = info.getValue();
-        if (!category) return <span className="text-muted-foreground">Uncategorized</span>;
+        const expense = info.row.original;
         return (
           <span className="inline-flex items-center gap-1.5">
-            <span
-              className="inline-block size-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: category.color }}
-            />
-            {category.name}
+            {info.getValue()}
+            {expense.note && <NoteButton note={expense.note} />}
           </span>
         );
       },
+    }),
+    columnHelper.accessor("category", {
+      header: "Category",
+      cell: (info) => <CategoryBadge category={info.getValue()} />,
     }),
     columnHelper.accessor("amountCents", {
       header: () => (
@@ -235,39 +315,51 @@ export function ExpenseTable({
   }
 
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <TableHead
-                key={header.id}
-                className={
-                  header.column.columnDef.meta?.align === "right" ? "text-right" : undefined
-                }
-              >
-                {header.isPlaceholder
-                  ? null
-                  : flexRender(header.column.columnDef.header, header.getContext())}
-              </TableHead>
+    <>
+      <MobileExpenseList
+        expenses={expenses}
+        categories={categories}
+        currency={currency}
+        rates={rates}
+      />
+      <div className="hidden sm:block">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className={
+                      header.column.columnDef.meta?.align === "right" ? "text-right" : undefined
+                    }
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
             ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id}>
-            {row.getAllCells().map((cell) => (
-              <TableCell
-                key={cell.id}
-                className={cell.column.columnDef.meta?.align === "right" ? "text-right" : undefined}
-              >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </TableCell>
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getAllCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className={
+                      cell.column.columnDef.meta?.align === "right" ? "text-right" : undefined
+                    }
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
             ))}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }

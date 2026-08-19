@@ -46,7 +46,7 @@ export default async function ExpensesPage({
   ]);
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 p-6">
+    <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-6 sm:px-6">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-medium">Expenses</h1>
         <ExpenseDialog

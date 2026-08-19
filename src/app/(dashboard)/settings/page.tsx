@@ -10,7 +10,7 @@ export default async function SettingsPage() {
 
   if (profile.isDemo) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
+      <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-6 sm:px-6">
         <div className="bg-accent text-accent-foreground rounded-lg p-3 text-sm">
           This is a demo account - settings can&apos;t be changed here so everyone trying the demo
           sees the same thing.
@@ -42,7 +42,7 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
+    <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-6 sm:px-6">
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-medium">Account</CardTitle>

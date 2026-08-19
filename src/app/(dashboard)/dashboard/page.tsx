@@ -19,7 +19,7 @@ export default async function DashboardPage() {
   const [session, hasExpenses] = await Promise.all([auth(), hasAnyExpenses()]);
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6">
       <div>
         <h1 className="text-lg font-medium">
           Welcome, {session?.user?.name?.split(" ")[0] ?? "there"}

@@ -75,7 +75,7 @@ export function RegisterForm() {
         )}
       </div>
       {state && !state.ok && <p className="text-destructive text-sm">{state.error}</p>}
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending} className="h-11 w-full rounded-xl text-base">
         {isPending ? "Creating account…" : "Create account"}
       </Button>
     </form>

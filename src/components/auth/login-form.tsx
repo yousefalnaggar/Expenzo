@@ -59,7 +59,7 @@ export function LoginForm() {
         )}
       </div>
       {state && !state.ok && <p className="text-destructive text-sm">{state.error}</p>}
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending} className="h-11 w-full rounded-xl text-base">
         {isPending ? "Signing in…" : "Sign in"}
       </Button>
       <Button
@@ -67,7 +67,7 @@ export function LoginForm() {
         variant="secondary"
         disabled={isPending}
         onClick={onTryDemo}
-        className="w-full"
+        className="h-11 w-full rounded-xl text-base"
       >
         Try the demo
       </Button>

@@ -26,7 +26,7 @@ export function UserMenu({
         render={
           <button
             type="button"
-            className="cursor-pointer rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="focus-visible:ring-ring/50 cursor-pointer rounded-full outline-none focus-visible:ring-3"
           >
             <UserAvatar name={name} image={image} size="sm" />
             <span className="sr-only">Open account menu</span>
@@ -44,7 +44,7 @@ export function UserMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => signOutUser()}
-          className="mt-1 rounded-lg bg-destructive px-3 py-2.5 text-white focus:bg-destructive/90 focus:text-white dark:text-white"
+          className="bg-destructive focus:bg-destructive/90 mt-1 rounded-lg px-3 py-2.5 text-white hover:cursor-pointer focus:text-white dark:text-white"
         >
           <LogOut />
           Sign out
