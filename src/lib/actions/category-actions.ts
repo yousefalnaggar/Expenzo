@@ -12,7 +12,8 @@ export type ActionResult =
 const DUPLICATE_NAME_ERROR = "A category with this name already exists.";
 
 function isUniqueConstraintError(error: unknown): boolean {
-  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return true;
+  return error instanceof Error && error.message === "DUPLICATE_NAME";
 }
 
 export async function createCategory(

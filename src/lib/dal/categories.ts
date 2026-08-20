@@ -31,8 +31,25 @@ export async function getCategories() {
   });
 }
 
+// The @@unique([userId, name]) DB constraint is case-sensitive (Postgres
+// default collation), so "food" and "Food" don't collide there — this check
+// catches that case before it reaches the DB.
+async function nameTakenByAnotherCategory(userId: string, name: string, excludeId?: string) {
+  const existing = await prisma.category.findFirst({
+    where: {
+      userId,
+      name: { equals: name, mode: "insensitive" },
+      ...(excludeId ? { id: { not: excludeId } } : {}),
+    },
+  });
+  return existing !== null;
+}
+
 export async function createCategory(input: { name: string; color: string }) {
   const userId = await requireUserId();
+  if (await nameTakenByAnotherCategory(userId, input.name)) {
+    throw new Error("DUPLICATE_NAME");
+  }
   return prisma.category.create({
     data: { ...input, userId },
   });
@@ -40,6 +57,9 @@ export async function createCategory(input: { name: string; color: string }) {
 
 export async function updateCategory(id: string, input: { name: string; color: string }) {
   const userId = await requireUserId();
+  if (await nameTakenByAnotherCategory(userId, input.name, id)) {
+    throw new Error("DUPLICATE_NAME");
+  }
   const result = await prisma.category.updateMany({
     where: { id, userId },
     data: input,
