@@ -98,9 +98,13 @@ export async function updateProfile(
       };
     }
 
-    await ensureAvatarBucket();
-    image = await uploadAvatar(profile.id, avatarParsed.data);
-    if (profile.image) await deleteAvatar(profile.image);
+    try {
+      await ensureAvatarBucket();
+      image = await uploadAvatar(profile.id, avatarParsed.data);
+      if (profile.image) await deleteAvatar(profile.image);
+    } catch {
+      return { ok: false, error: "Couldn't upload photo. Please try again." };
+    }
   }
 
   try {
@@ -112,9 +116,18 @@ export async function updateProfile(
     return { ok: false, error: "Something went wrong. Please try again." };
   }
 
-  await unstable_update({
-    user: { name: parsed.data.name, email: parsed.data.email, ...(image ? { image } : {}) },
-  });
+  // Best-effort: the DB write above already succeeded, so the profile
+  // update is real regardless of this outcome. This only refreshes the
+  // current device's session cookie so the UI reflects it without a
+  // re-login (the navbar/dashboard read the DB directly on next request
+  // either way) — not worth failing the whole action over.
+  try {
+    await unstable_update({
+      user: { name: parsed.data.name, email: parsed.data.email, ...(image ? { image } : {}) },
+    });
+  } catch {
+    // Ignore — see comment above.
+  }
 
   revalidatePath("/", "layout");
   return { ok: true };
@@ -154,7 +167,11 @@ export async function removeAvatar(): Promise<ActionResult> {
   if (profile.image) await deleteAvatar(profile.image);
   await removeUserAvatar();
 
-  await unstable_update({ user: { image: null } });
+  try {
+    await unstable_update({ user: { image: null } });
+  } catch {
+    // Best-effort — see comment in updateProfile.
+  }
 
   revalidatePath("/", "layout");
   return { ok: true };

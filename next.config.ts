@@ -9,10 +9,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Lets `next dev` serve HMR/static chunks when reached via the LAN IP
-  // (e.g. testing on a phone at http://192.168.1.6:3000) instead of
-  // localhost — dev-only, next build/start has no such restriction.
   allowedDevOrigins: ["192.168.1.6"],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "2200kb",
+    },
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

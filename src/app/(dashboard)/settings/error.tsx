@@ -12,7 +12,7 @@ export default function Error({
     <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-4 py-6 text-center sm:px-6">
       <h1 className="text-lg font-medium">Something went wrong</h1>
       <p className="text-muted-foreground text-sm">
-        We couldn&apos;t load your categories. Please try again.
+        We couldn&apos;t load your settings. Please try again.
       </p>
       <Button onClick={() => reset()}>Try again</Button>
     </div>

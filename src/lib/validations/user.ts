@@ -17,11 +17,11 @@ const ALLOWED_AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 export const avatarSchema = z
   .instanceof(File)
-  .refine((file) => file.size <= MAX_AVATAR_BYTES, "Image must be 2MB or smaller")
   .refine(
     (file) => ALLOWED_AVATAR_TYPES.includes(file.type),
-    "Image must be a PNG, JPEG, or WebP file",
-  );
+    "That image format isn't supported (e.g. HEIC/HEIF). Please use PNG, JPEG, or WebP.",
+  )
+  .refine((file) => file.size <= MAX_AVATAR_BYTES, "Image must be 2MB or smaller");
 
 export const passwordChangeSchema = z
   .object({

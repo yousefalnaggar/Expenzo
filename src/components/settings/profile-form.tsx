@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { profileSchema, type ProfileInput } from "@/lib/validations/user";
+import { profileSchema, avatarSchema, type ProfileInput } from "@/lib/validations/user";
 import { updateProfile, removeAvatar, type ActionResult } from "@/lib/actions/user-actions";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -37,13 +37,23 @@ export function ProfileForm({
     defaultValues: { name, email },
   });
 
+  const [fileError, setFileError] = useState<string | null>(null);
+
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setHasImage(true);
+    if (!file) return;
+
+    const result = avatarSchema.safeParse(file);
+    if (!result.success) {
+      setFileError(result.error.issues[0]?.message ?? "That image can't be used.");
+      e.target.value = "";
+      return;
     }
+
+    setFileError(null);
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setHasImage(true);
   };
 
   const onRemovePhoto = () => {
@@ -114,6 +124,7 @@ export function ProfileForm({
             onChange={onFileChange}
           />
           <p className="text-muted-foreground text-xs">PNG, JPEG, or WebP. Max 2MB.</p>
+          {fileError && <p className="text-destructive text-xs">{fileError}</p>}
         </div>
       </div>
       <div className="grid gap-1.5">

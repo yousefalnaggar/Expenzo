@@ -1,12 +1,16 @@
 import Link from "next/link";
-import { auth } from "@/auth";
+import { getUserProfile } from "@/lib/dal/users";
 import { NavLinks } from "@/components/layout/nav-links";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 
 export async function Navbar() {
-  const session = await auth();
+  // Reads the DB directly rather than session.user.{name,email,image} — the
+  // JWT is per-device and only refreshes on this device's own
+  // unstable_update() call, so trusting it here would show a stale avatar
+  // on every other signed-in device until they next log in.
+  const profile = await getUserProfile();
 
   return (
     <header className="border-b">
@@ -21,11 +25,7 @@ export async function Navbar() {
         <MobileNav className="md:hidden" />
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <ThemeToggle />
-          <UserMenu
-            name={session?.user?.name ?? null}
-            email={session?.user?.email ?? null}
-            image={session?.user?.image ?? null}
-          />
+          <UserMenu name={profile.name} email={profile.email} image={profile.image} />
         </div>
       </div>
     </header>
