@@ -126,4 +126,24 @@
   html {
     @apply font-sans;
   }
+
+  /* iOS/WebKit renders type="date" with its own intrinsic height/padding
+     that ignores the box model text inputs respect, so it overflows the
+     shared Input component's h-8 box on iPhone Safari/Aloha. */
+  input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 2rem;
+  }
+  input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+    margin: 0;
+  }
+  input[type="date"]::-webkit-datetime-edit {
+    padding: 0;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    padding: 0;
+    margin-left: 0.375rem;
+  }
 }

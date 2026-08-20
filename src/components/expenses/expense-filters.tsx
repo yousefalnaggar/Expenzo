@@ -120,7 +120,7 @@ export function ExpenseFilters({ categories }: { categories: Category[] }) {
             <Input
               id="filter-from"
               type="date"
-              defaultValue={searchParams.get("from") ?? ""}
+              value={searchParams.get("from") ?? ""}
               onChange={(e) => updateParams({ from: e.target.value || undefined })}
               className="w-full sm:w-40"
             />
@@ -130,7 +130,7 @@ export function ExpenseFilters({ categories }: { categories: Category[] }) {
             <Input
               id="filter-to"
               type="date"
-              defaultValue={searchParams.get("to") ?? ""}
+              value={searchParams.get("to") ?? ""}
               onChange={(e) => updateParams({ to: e.target.value || undefined })}
               className="w-full sm:w-40"
             />
