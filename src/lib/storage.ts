@@ -42,13 +42,24 @@ export async function ensureAvatarBucket() {
   });
 }
 
-export async function uploadAvatar(userId: string, file: File): Promise<string> {
+// mimeType must come from a magic-byte sniff of the actual content (see
+// user-actions.ts), never from the client-supplied File.type — that's just
+// whatever Content-Type the multipart request declared and is attacker
+// controlled when the action is hit directly rather than through our form.
+// This is also what gets stored as the object's Content-Type and served
+// back to every browser that loads the public avatar URL, so trusting an
+// unverified value here would let a renamed file get served as image/*.
+export async function uploadAvatar(
+  userId: string,
+  bytes: Buffer,
+  mimeType: string,
+): Promise<string> {
   const supabase = getClient();
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const ext = mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
   const path = `${userId}/${Date.now()}.${ext}`;
 
-  const { error } = await supabase.storage.from(AVATAR_BUCKET).upload(path, file, {
-    contentType: file.type,
+  const { error } = await supabase.storage.from(AVATAR_BUCKET).upload(path, bytes, {
+    contentType: mimeType,
     upsert: false,
   });
   if (error) throw error;

@@ -4,10 +4,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
+import { fileTypeFromBuffer } from "file-type";
 import {
   currencySchema,
   profileSchema,
   avatarSchema,
+  ALLOWED_AVATAR_TYPES,
+  AVATAR_FORMAT_ERROR,
   passwordChangeSchema,
 } from "@/lib/validations/user";
 import {
@@ -98,9 +101,24 @@ export async function updateProfile(
       };
     }
 
+    // The declared File.type (checked above by avatarSchema) is just
+    // whatever Content-Type the request's multipart part claims — a
+    // renamed file or a hand-built request can set it to anything. Sniff
+    // the real magic bytes and trust that instead, per CLAUDE.md: never
+    // trust client-declared file type as a security boundary.
+    const buffer = Buffer.from(await avatarParsed.data.arrayBuffer());
+    const detected = await fileTypeFromBuffer(buffer);
+    if (!detected || !ALLOWED_AVATAR_TYPES.includes(detected.mime)) {
+      return {
+        ok: false,
+        error: AVATAR_FORMAT_ERROR,
+        fieldErrors: { avatar: [AVATAR_FORMAT_ERROR] },
+      };
+    }
+
     try {
       await ensureAvatarBucket();
-      image = await uploadAvatar(profile.id, avatarParsed.data);
+      image = await uploadAvatar(profile.id, buffer, detected.mime);
       if (profile.image) await deleteAvatar(profile.image);
     } catch {
       return { ok: false, error: "Couldn't upload photo. Please try again." };

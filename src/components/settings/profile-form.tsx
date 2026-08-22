@@ -5,7 +5,14 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { profileSchema, avatarSchema, type ProfileInput } from "@/lib/validations/user";
+import { fileTypeFromBuffer } from "file-type";
+import {
+  profileSchema,
+  avatarSchema,
+  ALLOWED_AVATAR_TYPES,
+  AVATAR_FORMAT_ERROR,
+  type ProfileInput,
+} from "@/lib/validations/user";
 import { updateProfile, removeAvatar, type ActionResult } from "@/lib/actions/user-actions";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -38,15 +45,36 @@ export function ProfileForm({
   });
 
   const [fileError, setFileError] = useState<string | null>(null);
+  const [isCheckingFile, setIsCheckingFile] = useState(false);
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
 
+    // Cheap checks first (size, declared type) before touching the file's
+    // bytes.
     const result = avatarSchema.safeParse(file);
     if (!result.success) {
       setFileError(result.error.issues[0]?.message ?? "That image can't be used.");
-      e.target.value = "";
+      input.value = "";
+      return;
+    }
+
+    // A renamed file (e.g. a HEIC or arbitrary file with its extension
+    // swapped to .png) still passes the check above, since File.type is
+    // just the browser's guess from the extension. Sniff the real magic
+    // bytes here so a spoofed file never leaves the browser — this mirrors
+    // the authoritative check the server repeats in user-actions.ts, since
+    // this client check is UX only and can't be trusted as the real gate.
+    setIsCheckingFile(true);
+    const buffer = new Uint8Array(await file.arrayBuffer());
+    const detected = await fileTypeFromBuffer(buffer);
+    setIsCheckingFile(false);
+
+    if (!detected || !ALLOWED_AVATAR_TYPES.includes(detected.mime)) {
+      setFileError(AVATAR_FORMAT_ERROR);
+      input.value = "";
       return;
     }
 
@@ -100,9 +128,10 @@ export function ProfileForm({
               type="button"
               variant="outline"
               size="sm"
+              disabled={isCheckingFile}
               onClick={() => fileInputRef.current?.click()}
             >
-              Change photo
+              {isCheckingFile ? "Checking…" : "Change photo"}
             </Button>
             {hasImage && (
               <Button

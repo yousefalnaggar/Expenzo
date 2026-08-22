@@ -33,7 +33,9 @@ export function MonthlyTrendChart({ data, currency }: { data: MonthBucket[]; cur
                 tickFormatter={(value: number) => formatCurrency(value, currency)}
                 width={72}
               />
-              <Tooltip formatter={(value) => formatCurrency(Number(value), currency)} />
+              <Tooltip
+                formatter={(value) => [formatCurrency(Number(value), currency), "Month total"]}
+              />
               <Line
                 type="monotone"
                 dataKey="totalCents"

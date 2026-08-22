@@ -12,16 +12,16 @@ export const profileSchema = z.object({
 });
 export type ProfileInput = z.infer<typeof profileSchema>;
 
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
-const ALLOWED_AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp"];
+export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+export const ALLOWED_AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp"];
+export const AVATAR_FORMAT_ERROR =
+  "That image format isn't supported (e.g. HEIC/HEIF). Please use PNG, JPEG, or WebP.";
+export const AVATAR_SIZE_ERROR = "Image must be 2MB or smaller";
 
 export const avatarSchema = z
   .instanceof(File)
-  .refine(
-    (file) => ALLOWED_AVATAR_TYPES.includes(file.type),
-    "That image format isn't supported (e.g. HEIC/HEIF). Please use PNG, JPEG, or WebP.",
-  )
-  .refine((file) => file.size <= MAX_AVATAR_BYTES, "Image must be 2MB or smaller");
+  .refine((file) => ALLOWED_AVATAR_TYPES.includes(file.type), AVATAR_FORMAT_ERROR)
+  .refine((file) => file.size <= MAX_AVATAR_BYTES, AVATAR_SIZE_ERROR);
 
 export const passwordChangeSchema = z
   .object({
